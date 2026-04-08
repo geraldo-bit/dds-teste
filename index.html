@@ -34,16 +34,24 @@
 
     <div id="tela-dss" class="container" style="display: none;">
         <header>
-            <h2>📋 Lista de Presença - DSS</h2>
+            <h2> Lista de Presença - DSS</h2>
             <p>Operador: <strong id="usuario-logado"></strong></p>
-            <div class="status-global">Status da Lista: <span id="badge-status">⏳ Carregando...</span></div>
+            <div class="status-global">Status da Lista: <span id="badge-status"> Carregando...</span></div>
+            
+            <div class="responsavel-box">
+                ️ Apresentador do DSS de Hoje: <strong id="nome-responsavel"> Carregando...</strong>
+            </div>
+
             <button id="btn-sair" class="btn-deslogar">Voltar ao Início</button>
         </header>
 
         <main>
             <div id="painel-professor" class="controle-professor" style="display: none;">
-                <h3>Controle de Assinaturas</h3>
-                <button id="btn-trava">🔓 Liberar Lista</button>
+                <h3>Controle do Professor</h3>
+                <div class="controle-acoes">
+                    <button id="btn-trava"> Liberar Lista</button>
+                    <button id="btn-pular"> Pular (Faltou)</button>
+                </div>
             </div>
 
             <div class="registro-box">
@@ -76,7 +84,7 @@
             </div>
 
             <div class="acoes-finais">
-                <button id="btn-finalizar" style="display: none;">✅ Finalizar DSS</button>
+                <button id="btn-finalizar" style="display: none;"> Finalizar DSS do Dia</button>
             </div>
         </main>
     </div>
