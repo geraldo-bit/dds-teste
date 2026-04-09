@@ -1,8 +1,11 @@
 // 1. IMPORTAÇÕES DO FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { 
+    getFirestore, collection, doc, setDoc, onSnapshot, addDoc, 
+    serverTimestamp, query, orderBy, getDocs, deleteDoc 
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// 2. CONFIGURAÇÃO DO FIREBASE
+// 2. CONFIGURAÇÃO DO FIREBASE (Cole a sua chave aqui)
 const firebaseConfig = {
     apiKey: "AIzaSyD78g8BkCFCMwFxYkYmh6V0zfXmLvHQkEY",
     authDomain: "dss-digital-senai.firebaseapp.com",
@@ -16,14 +19,29 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 3. BASE DE DADOS LOCAL
+// 3. BASE DE DADOS LOCAL (18 Nomes)
 const bancoDeDados = {
-    "0001143260": { nome: "Geraldo Pereira Xavier", assinatura: "https://via.placeholder.com/150x40/ffffff/000000?text=Assinatura+Carlos" },
-    "1002": { nome: "Ana Paula Silva", assinatura: "https://via.placeholder.com/150x40/ffffff/000000?text=Assinatura+Ana" },
-    "1003": { nome: "Marcos Vinícius", assinatura: "https://via.placeholder.com/150x40/ffffff/000000?text=Assinatura+Marcos" }
+    "0001143260": { nome: "GERALDO PEREIRA XAVIER", assinatura: "assina" },
+    "0001194553": { nome: "ANA BEATRIZ ROCHA BARBOSA", assinatura: "assina" },
+    "0001194470": { nome: "ANTONIO SERGIO MIGUEL CUNHA", assinatura: "assina"},
+    "0001194638": { nome: "ARIEL DUARTE CAJADO", assinatura: "assina"},
+    "0001194585": { nome: "DIEGO PEREIRA SALES", assinatura: "assina"},
+    "0001071300": { nome: "DJONATHA MESSIAS RIBEIRO SANTOS", assinatura: "assina"},
+    "0001194231": { nome: "FELIPE ALEXANDRE DA ROCHA SILVA", assinatura: "assina"},
+    "0001194285": { nome: "ERICK HENRIQUE BARBOSA", assinatura: "assina"},
+    "0001194278": { nome: "JOAO VICTOR SARAIVA RESENDE", assinatura: "assina"},
+    "0001103840": { nome: "JOHNY ROBERTO OLIVEIRA JUNIOR", assinatura: "assina"},
+    "0001194502": { nome: "KAUANNY CRISTINY SANTOS FERREIRA", assinatura: "assina"},
+    "0001145074": { nome: "LUIS GUSTAVO DE SOUZA MELO", assinatura: "assina"},
+    "0001194133": { nome: "MARIA GABRIELA DOS SANTOS", assinatura: "assina"},
+    "0001135194": { nome: "MARIANA ZUCCO GONTIJO", assinatura: "assina"},
+    "0001104669": { nome: "NICOLAS KEVIN FERREIRA DA SILVA", assinatura: "assina"},
+    "0001194531": { nome: "NICOLLE HERMANO GONCALVES DA SILVA", assinatura: "assina"},
+    "0000921621": { nome: "PABLO YURI PIRES DE SOUZA", assinatura: "assina"},
+    "0001023129": { nome: "RONAN JOSE FERREIRA COSTA", assinatura: "assina"}
 };
 
-// 4. MAPEAMENTO DOS ELEMENTOS DA TELA
+// 4. MAPEAMENTO DA TELA
 const telaLogin = document.getElementById('tela-login');
 const telaDSS = document.getElementById('tela-dss');
 const formLogin = document.getElementById('form-login');
@@ -31,39 +49,51 @@ const msgErro = document.getElementById('msg-erro');
 const btnSair = document.getElementById('btn-sair');
 const usuarioLogadoTexto = document.getElementById('usuario-logado');
 
+// Elementos novos do Tema e PDF
+const dataAtualText = document.getElementById('data-atual');
+const temaDisplay = document.getElementById('tema-display');
+const inputTema = document.getElementById('input-tema');
+const btnSalvarTema = document.getElementById('btn-salvar-tema');
+const btnGerarPdf = document.getElementById('btn-gerar-pdf');
+
 const btnEntrarAluno = document.getElementById('btn-entrar-aluno');
 const painelProfessor = document.getElementById('painel-professor');
 const btnFinalizar = document.getElementById('btn-finalizar');
 
 const btnTrava = document.getElementById('btn-trava');
-const btnPular = document.getElementById('btn-pular'); // Novo botão
+const btnPular = document.getElementById('btn-pular'); 
 const badgeStatus = document.getElementById('badge-status');
-const nomeResponsavelText = document.getElementById('nome-responsavel'); // Novo banner
+const nomeResponsavelText = document.getElementById('nome-responsavel'); 
 
 const matriculaInput = document.getElementById('matricula');
 const nomeInput = document.getElementById('nome');
 const btnAssinar = document.getElementById('btn-assinar');
 const tabelaBody = document.querySelector('#tabela-presenca tbody');
 
-// Variáveis de Estado
+// Variáveis de Controle
 let colaboradorAtual = null;
 let listaLiberada = false; 
 let presentes = new Set(); 
-let filaResponsaveis = []; // Nossa nova fila do DSS
+let filaResponsaveis = []; 
+let pulosAtuais = 0; 
 
-// 5. LÓGICA DE LOGIN
+// 5. INICIALIZAÇÃO DA DATA
+const dataHoje = new Date().toLocaleDateString('pt-BR');
+dataAtualText.innerText = dataHoje;
+
+// 6. LÓGICA DE LOGIN
 formLogin.addEventListener('submit', (e) => {
     e.preventDefault();
-    const email = document.getElementById('email-login').value.toLowerCase();
     const senha = document.getElementById('senha-login').value;
 
-    if (email.includes('senai') && senha.length > 3) {
+    if (senha === "senai123") {
         telaLogin.style.display = 'none';
         telaDSS.style.display = 'block';
         painelProfessor.style.display = 'flex'; 
         btnFinalizar.style.display = 'inline-block'; 
+        btnGerarPdf.style.display = 'inline-block'; // Mostra botão do PDF
         
-        usuarioLogadoTexto.innerText = email;
+        usuarioLogadoTexto.innerText = "Professor"; 
         msgErro.style.display = 'none';
         document.getElementById('senha-login').value = ''; 
     } else {
@@ -76,22 +106,23 @@ btnEntrarAluno.addEventListener('click', () => {
     telaDSS.style.display = 'block';
     painelProfessor.style.display = 'none'; 
     btnFinalizar.style.display = 'none'; 
+    btnGerarPdf.style.display = 'none'; // Esconde botão do PDF do aluno
     usuarioLogadoTexto.innerText = "Acesso de Colaborador/Aluno";
 });
 
 btnSair.addEventListener('click', () => {
     telaDSS.style.display = 'none';
     telaLogin.style.display = 'block';
-    document.getElementById('email-login').value = '';
     limparFormulario();
 });
 
-// 6. COMUNICAÇÃO FIREBASE (TEMPO REAL)
+// 7. FIREBASE EM TEMPO REAL
 
-// A - Escuta a Trava/Destrava
+// A - Escuta o Status (Trava e Tema)
 onSnapshot(doc(db, "configuracoes", "statusDSS"), (documento) => {
     if (documento.exists()) {
         listaLiberada = documento.data().aberta;
+        temaDisplay.innerText = documento.data().tema || "Aguardando definição...";
     } else {
         listaLiberada = false; 
     }
@@ -114,81 +145,61 @@ onSnapshot(doc(db, "configuracoes", "statusDSS"), (documento) => {
     }
 });
 
-btnTrava.addEventListener('click', async () => {
-    await setDoc(doc(db, "configuracoes", "statusDSS"), {
-        aberta: !listaLiberada
-    });
+// Ação de Salvar Tema
+btnSalvarTema.addEventListener('click', async () => {
+    const temaTexto = inputTema.value.trim();
+    if (!temaTexto) { alert("Digite um tema antes de salvar."); return; }
+    
+    // O merge:true altera o tema sem apagar a situação da trava
+    await setDoc(doc(db, "configuracoes", "statusDSS"), { tema: temaTexto }, { merge: true });
+    alert("Tema definido para todos!");
+    inputTema.value = "";
 });
 
-// B - NOVA FUNÇÃO: Escuta a Fila do DSS
+btnTrava.addEventListener('click', async () => {
+    await setDoc(doc(db, "configuracoes", "statusDSS"), { aberta: !listaLiberada }, { merge: true });
+});
+
+// B - Escuta a Fila do DSS
 onSnapshot(doc(db, "configuracoes", "filaDSS"), (documento) => {
     if (documento.exists()) {
         filaResponsaveis = documento.data().fila || [];
+        pulosAtuais = documento.data().pulos || 0;
         
-        // Atualiza o Banner com o nome do primeiro da fila
         if(filaResponsaveis.length > 0) {
-            const matriculaDoDia = filaResponsaveis[0];
+            let visualFila = [...filaResponsaveis];
+            if (pulosAtuais > 0 && pulosAtuais < visualFila.length) {
+                let apresentador = visualFila.splice(pulosAtuais, 1)[0];
+                visualFila.unshift(apresentador);
+            }
+            const matriculaDoDia = visualFila[0];
             const info = bancoDeDados[matriculaDoDia];
             nomeResponsavelText.innerText = info ? info.nome : "Desconhecido";
         } else {
             nomeResponsavelText.innerText = "Nenhum responsável na fila";
         }
     } else {
-        // Se a fila não existir no Firebase, cria ela baseada no nosso Banco de Dados
-        const filaInicial = Object.keys(bancoDeDados); // Pega todas as matrículas
-        setDoc(doc(db, "configuracoes", "filaDSS"), { fila: filaInicial });
+        // Primeira vez rodando: organiza do A ao Z
+        const filaInicial = Object.keys(bancoDeDados).sort((a, b) => {
+            return bancoDeDados[a].nome.localeCompare(bancoDeDados[b].nome);
+        }); 
+        setDoc(doc(db, "configuracoes", "filaDSS"), { fila: filaInicial, pulos: 0 });
     }
 });
 
-// C - Ação do Professor: PULAR QUEM FALTOU
+// Ação de Pular
 btnPular.addEventListener('click', async () => {
-    if (filaResponsaveis.length < 2) {
-        alert("Não há pessoas suficientes na fila para realizar a troca.");
-        return;
-    }
-    
-    // Troca o Primeiro (0) com o Segundo (1)
-    let novaFila = [...filaResponsaveis];
-    let pessoaAtual = novaFila[0];
-    novaFila[0] = novaFila[1]; // O segundo vira o apresentador de hoje
-    novaFila[1] = pessoaAtual; // O que faltou hoje fica escalado pra amanhã
-
-    // Salva a mudança na nuvem
-    await setDoc(doc(db, "configuracoes", "filaDSS"), {
-        fila: novaFila
-    });
+    if (filaResponsaveis.length === 0) return;
+    let novoPulo = pulosAtuais + 1;
+    if (novoPulo >= filaResponsaveis.length) novoPulo = 0;
+    await setDoc(doc(db, "configuracoes", "filaDSS"), { fila: filaResponsaveis, pulos: novoPulo });
 });
 
-// D - Ação do Professor: FINALIZAR O DSS DO DIA
-btnFinalizar.addEventListener('click', async () => {
-    if (presentes.size === 0) {
-        alert("A lista está vazia. Ninguém assinou ainda.");
-        return;
-    }
-
-    // Rotaciona a fila: Tira quem apresentou hoje e coloca ele no final
-    if (filaResponsaveis.length > 0) {
-        let novaFila = [...filaResponsaveis];
-        let quemApresentou = novaFila.shift(); // Remove do início
-        novaFila.push(quemApresentou); // Adiciona no final da fila
-
-        await setDoc(doc(db, "configuracoes", "filaDSS"), {
-            fila: novaFila
-        });
-    }
-
-    // Bloqueia a lista automaticamente pro próximo dia
-    await setDoc(doc(db, "configuracoes", "statusDSS"), { aberta: false });
-
-    alert(`DSS Finalizado com sucesso!\nA lista foi fechada e o próximo apresentador já foi escalado para amanhã.`);
-});
-
-// E - Escuta a Tabela de Assinaturas
+// Escuta Assinaturas
 const consultaPresencas = query(collection(db, "presencas"), orderBy("nome", "asc"));
 onSnapshot(consultaPresencas, (snapshot) => {
     tabelaBody.innerHTML = ''; 
     presentes.clear(); 
-
     snapshot.forEach((docSnap) => {
         const dados = docSnap.data();
         presentes.add(dados.matricula); 
@@ -196,7 +207,7 @@ onSnapshot(consultaPresencas, (snapshot) => {
     });
 });
 
-// 7. LÓGICA DE PREENCHIMENTO E ASSINATURA
+// 8. LÓGICA DE ASSINATURA NA TELA
 matriculaInput.addEventListener('input', (e) => {
     const mat = e.target.value.trim(); 
     if (bancoDeDados[mat]) {
@@ -219,23 +230,17 @@ btnAssinar.addEventListener('click', registrarPresenca);
 
 async function registrarPresenca() {
     if (!colaboradorAtual) return;
-    if (!listaLiberada) {
-        alert("A lista está fechada! Aguarde a liberação.");
-        return;
-    }
+    if (!listaLiberada) { alert("A lista está fechada!"); return; }
     if (presentes.has(colaboradorAtual.matricula)) {
-        alert(`O colaborador ${colaboradorAtual.nome} já assinou hoje!`);
-        limparFormulario();
-        return;
+        alert(`${colaboradorAtual.nome} já assinou hoje!`);
+        limparFormulario(); return;
     }
-
     await addDoc(collection(db, "presencas"), {
         matricula: colaboradorAtual.matricula,
         nome: colaboradorAtual.nome,
         assinatura: colaboradorAtual.assinatura,
         timestamp: serverTimestamp() 
     });
-
     limparFormulario();
 }
 
@@ -251,11 +256,93 @@ function adicionarNaTabela(colaborador) {
 }
 
 function limparFormulario() {
-    matriculaInput.value = "";
-    nomeInput.value = "";
-    btnAssinar.disabled = true;
-    colaboradorAtual = null;
-    if (!matriculaInput.disabled) {
-        matriculaInput.focus(); 
-    }
+    matriculaInput.value = ""; nomeInput.value = ""; btnAssinar.disabled = true; colaboradorAtual = null;
+    if (!matriculaInput.disabled) matriculaInput.focus(); 
 }
+
+// 9. LÓGICA DE GERAÇÃO DO PDF
+btnGerarPdf.addEventListener('click', () => {
+    // 1. Prepara o horário
+    const horarioAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    // 2. Preenche o cabeçalho do template escondido
+    document.getElementById('pdf-data').innerText = dataHoje;
+    document.getElementById('pdf-horario').innerText = horarioAtual;
+    document.getElementById('pdf-tema').innerText = temaDisplay.innerText;
+    document.getElementById('pdf-instrutor').innerText = nomeResponsavelText.innerText;
+
+    // 3. Preenche as 30 linhas da tabela do PDF
+    const tbodyPDF = document.getElementById('pdf-tbody');
+    tbodyPDF.innerHTML = ''; 
+    const trsPresentes = document.querySelectorAll('#tabela-presenca tbody tr');
+
+    for (let i = 0; i < 30; i++) {
+        const tr = document.createElement('tr');
+        
+        if (i < trsPresentes.length) {
+            // [0]=Matrícula, [1]=Nome, [2]=Assinatura (Da tela para o PDF)
+            const matricula = trsPresentes[i].querySelectorAll('td')[0].innerText;
+            const nomePessoa = trsPresentes[i].querySelectorAll('td')[1].innerText;
+            const assinaturaImg = trsPresentes[i].querySelectorAll('td')[2].innerHTML;
+            
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${matricula}</td>
+                <td>${nomePessoa}</td>
+                <td style="text-align: center; padding: 2px;">
+                    ${assinaturaImg.replace('<img', '<img style="max-height: 22px;"')}
+                </td>
+            `;
+        } else {
+            // Cria linhas em branco para inteirar 30 espaços
+            tr.innerHTML = `<td>${i + 1}</td><td></td><td></td><td></td>`;
+        }
+        tbodyPDF.appendChild(tr);
+    }
+
+    // 4. Manda o html2pdf tirar a "foto" da div escondida
+    const elementoPDF = document.getElementById('container-pdf');
+    const opt = {
+        margin:       0,
+        filename:     `DDS_${dataHoje.replace(/\//g, '-')}.pdf`,
+        image:        { type: 'jpeg', quality: 1 },
+        html2canvas:  { scale: 2, useCORS: true }, 
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    const textoOriginal = btnGerarPdf.innerText;
+    btnGerarPdf.innerText = "⏳ Gerando...";
+    btnGerarPdf.disabled = true;
+
+    html2pdf().set(opt).from(elementoPDF).save().then(() => {
+        btnGerarPdf.innerText = textoOriginal;
+        btnGerarPdf.disabled = false;
+    });
+});
+
+// 10. FINALIZAR O DIA
+btnFinalizar.addEventListener('click', async () => {
+    if (presentes.size === 0) { alert("A lista está vazia."); return; }
+
+    if (filaResponsaveis.length > 0) {
+        let visualFila = [...filaResponsaveis];
+        if (pulosAtuais > 0 && pulosAtuais < visualFila.length) {
+            let apresentador = visualFila.splice(pulosAtuais, 1)[0];
+            visualFila.unshift(apresentador);
+        }
+        let quemApresentouHoje = visualFila.shift(); 
+        visualFila.push(quemApresentouHoje); 
+        await setDoc(doc(db, "configuracoes", "filaDSS"), { fila: visualFila, pulos: 0 });
+    }
+
+    // Bloqueia e limpa o tema para amanhã
+    await setDoc(doc(db, "configuracoes", "statusDSS"), { aberta: false, tema: "Aguardando definição..." });
+    
+    // Limpa assinaturas do banco
+    const snapshotPresencas = await getDocs(collection(db, "presencas"));
+    const promessasDeletar = snapshotPresencas.docs.map((d) => deleteDoc(doc(db, "presencas", d.id)));
+    await Promise.all(promessasDeletar);
+    
+    limparFormulario();
+    alert(`DSS Finalizado com sucesso!\nO próximo apresentador já foi escalado para amanhã.`);
+});
