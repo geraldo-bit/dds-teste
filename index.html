@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DSS Digital - SENAI</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -16,14 +17,11 @@
             <form id="form-login">
                 <p class="titulo-sessao">Acesso do Professor:</p>
                 <div class="input-group">
-                    <input type="email" id="email-login" placeholder="E-mail Institucional" required>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="senha-login" placeholder="Senha" required>
+                    <input type="password" id="senha-login" placeholder="Senha de Acesso" required>
                 </div>
                 <button type="submit" id="btn-entrar">Entrar como Professor</button>
             </form>
-            <p id="msg-erro" class="erro-escondido">E-mail ou senha inválidos.</p>
+            <p id="msg-erro" class="erro-escondido">Senha inválida.</p>
 
             <hr class="divisor">
             
@@ -35,19 +33,34 @@
     <div id="tela-dss" class="container" style="display: none;">
         <header>
             <h2> Lista de Presença - DSS</h2>
-            <p>Operador: <strong id="usuario-logado"></strong></p>
+            
+            <div class="info-cabecalho">
+                <p>Data: <strong id="data-atual">--/--/----</strong></p>
+                <p>Operador: <strong id="usuario-logado"></strong></p>
+            </div>
+            
+            <div class="tema-box">
+                Tema de Hoje: <strong id="tema-display">Aguardando definição...</strong>
+            </div>
+
             <div class="status-global">Status da Lista: <span id="badge-status"> Carregando...</span></div>
             
             <div class="responsavel-box">
-                ️ Apresentador do DSS de Hoje: <strong id="nome-responsavel"> Carregando...</strong>
+                Apresentador de Hoje: <strong id="nome-responsavel"> Carregando...</strong>
             </div>
 
-            <button id="btn-sair" class="btn-deslogar">Voltar ao Início</button>
+            <button id="btn-sair" class="btn-deslogar">Sair</button>
         </header>
 
         <main>
             <div id="painel-professor" class="controle-professor" style="display: none;">
                 <h3>Controle do Professor</h3>
+                
+                <div class="config-tema">
+                    <input type="text" id="input-tema" placeholder="Digite o tema do DSS...">
+                    <button id="btn-salvar-tema">Definir Tema</button>
+                </div>
+
                 <div class="controle-acoes">
                     <button id="btn-trava"> Liberar Lista</button>
                     <button id="btn-pular"> Pular (Faltou)</button>
@@ -84,9 +97,46 @@
             </div>
 
             <div class="acoes-finais">
+                <button id="btn-gerar-pdf" style="display: none; background-color: #6c757d; margin-right: 10px;">📄 Gerar PDF</button>
                 <button id="btn-finalizar" style="display: none;"> Finalizar DSS do Dia</button>
             </div>
         </main>
+    </div>
+
+    <div id="container-pdf">
+        <table class="tabela-pdf">
+            <tr>
+                <td style="width: 20%; text-align: center; vertical-align: middle;">
+                    <img src="https://logospng.org/download/senai/logo-senai-256.png" style="max-height: 40px;">
+                </td>
+                <td colspan="2" style="font-size: 18px; font-weight: bold; text-align: center; vertical-align: middle;">
+                    DIÁLOGO DIÁRIO DE SEGURANÇA - DDS
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="width: 50%;"><strong>DATA:</strong> <span id="pdf-data"></span></td>
+                <td style="width: 50%;"><strong>HORÁRIO:</strong> <span id="pdf-horario"></span></td>
+            </tr>
+            <tr>
+                <td colspan="3"><strong>TEMA:</strong> <span id="pdf-tema"></span></td>
+            </tr>
+            <tr>
+                <td colspan="3"><strong>INSTRUTOR:</strong> <span id="pdf-instrutor"></span></td>
+            </tr>
+        </table>
+
+        <table class="tabela-pdf tabela-body">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">Nº</th>
+                    <th style="width: 15%;">MATRÍCULA</th>
+                    <th style="width: 45%;">NOME</th>
+                    <th style="width: 35%;">ASSINATURA</th>
+                </tr>
+            </thead>
+            <tbody id="pdf-tbody">
+                </tbody>
+        </table>
     </div>
 
     <script type="module" src="script.js"></script>
