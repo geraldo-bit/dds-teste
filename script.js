@@ -333,8 +333,6 @@ btnGerarPdf.addEventListener('click', () => {
         });
     }, 100); // <-- Aqui estão os nossos 100 milissegundos salvadores!
 });
-
-});
 // 10. FINALIZAR O DIA
 btnFinalizar.addEventListener('click', async () => {
     if (presentes.size === 0) { alert("A lista está vazia."); return; }
