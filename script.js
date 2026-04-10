@@ -260,7 +260,7 @@ function limparFormulario() {
     if (!matriculaInput.disabled) matriculaInput.focus(); 
 }
 
-// 9. LÓGICA DE GERAÇÃO DO PDF
+// 9. LÓGICA DE GERAÇÃO DO PDF (Corrigida para não sair em branco)
 btnGerarPdf.addEventListener('click', () => {
     // 1. Prepara o horário
     const horarioAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -300,8 +300,10 @@ btnGerarPdf.addEventListener('click', () => {
         tbodyPDF.appendChild(tr);
     }
 
-    // 4. Manda o html2pdf tirar a "foto" da div escondida
+    // --- A MÁGICA PARA NÃO FICAR BRANCO ---
     const elementoPDF = document.getElementById('container-pdf');
+    const telaPrincipal = document.getElementById('tela-dss');
+
     const opt = {
         margin:       0,
         filename:     `DDS_${dataHoje.replace(/\//g, '-')}.pdf`,
@@ -314,12 +316,23 @@ btnGerarPdf.addEventListener('click', () => {
     btnGerarPdf.innerText = "⏳ Gerando...";
     btnGerarPdf.disabled = true;
 
+    // 1. Traz o template do PDF para a tela visível e esconde o sistema
+    elementoPDF.style.position = 'relative';
+    elementoPDF.style.left = '0';
+    telaPrincipal.style.display = 'none';
+
+    // 2. Tira a foto e gera o PDF
     html2pdf().set(opt).from(elementoPDF).save().then(() => {
+        
+        // 3. Devolve tudo ao normal (esconde o PDF e mostra o sistema)
+        elementoPDF.style.position = 'absolute';
+        elementoPDF.style.left = '-9999px';
+        telaPrincipal.style.display = 'block';
+
         btnGerarPdf.innerText = textoOriginal;
         btnGerarPdf.disabled = false;
     });
 });
-
 // 10. FINALIZAR O DIA
 btnFinalizar.addEventListener('click', async () => {
     if (presentes.size === 0) { alert("A lista está vazia."); return; }
