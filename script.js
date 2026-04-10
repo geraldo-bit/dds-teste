@@ -260,7 +260,7 @@ function limparFormulario() {
     if (!matriculaInput.disabled) matriculaInput.focus(); 
 }
 
-// 9. LÓGICA DE GERAÇÃO DO PDF (Corrigida para não sair em branco)
+// // 9. LÓGICA DE GERAÇÃO DO PDF (Agora com pausa para a câmera focar!)
 btnGerarPdf.addEventListener('click', () => {
     // 1. Prepara o horário
     const horarioAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -280,7 +280,6 @@ btnGerarPdf.addEventListener('click', () => {
         const tr = document.createElement('tr');
         
         if (i < trsPresentes.length) {
-            // [0]=Matrícula, [1]=Nome, [2]=Assinatura (Da tela para o PDF)
             const matricula = trsPresentes[i].querySelectorAll('td')[0].innerText;
             const nomePessoa = trsPresentes[i].querySelectorAll('td')[1].innerText;
             const assinaturaImg = trsPresentes[i].querySelectorAll('td')[2].innerHTML;
@@ -294,13 +293,12 @@ btnGerarPdf.addEventListener('click', () => {
                 </td>
             `;
         } else {
-            // Cria linhas em branco para inteirar 30 espaços
             tr.innerHTML = `<td>${i + 1}</td><td></td><td></td><td></td>`;
         }
         tbodyPDF.appendChild(tr);
     }
 
-    // --- A MÁGICA PARA NÃO FICAR BRANCO ---
+    // --- A MÁGICA COM O TIME-OUT ---
     const elementoPDF = document.getElementById('container-pdf');
     const telaPrincipal = document.getElementById('tela-dss');
 
@@ -316,22 +314,26 @@ btnGerarPdf.addEventListener('click', () => {
     btnGerarPdf.innerText = "⏳ Gerando...";
     btnGerarPdf.disabled = true;
 
-    // 1. Traz o template do PDF para a tela visível e esconde o sistema
+    // 1. Coloca a tabela do PDF na tela e esconde o painel do sistema
     elementoPDF.style.position = 'relative';
     elementoPDF.style.left = '0';
     telaPrincipal.style.display = 'none';
 
-    // 2. Tira a foto e gera o PDF
-    html2pdf().set(opt).from(elementoPDF).save().then(() => {
-        
-        // 3. Devolve tudo ao normal (esconde o PDF e mostra o sistema)
-        elementoPDF.style.position = 'absolute';
-        elementoPDF.style.left = '-9999px';
-        telaPrincipal.style.display = 'block';
+    // 2. Dá uma pausa de 100 milissegundos ANTES de tirar a foto
+    setTimeout(() => {
+        html2pdf().set(opt).from(elementoPDF).save().then(() => {
+            
+            // 3. A foto foi tirada! Pode devolver tudo ao normal
+            elementoPDF.style.position = 'absolute';
+            elementoPDF.style.left = '-9999px';
+            telaPrincipal.style.display = 'block';
 
-        btnGerarPdf.innerText = textoOriginal;
-        btnGerarPdf.disabled = false;
-    });
+            btnGerarPdf.innerText = textoOriginal;
+            btnGerarPdf.disabled = false;
+        });
+    }, 100); // <-- Aqui estão os nossos 100 milissegundos salvadores!
+});
+
 });
 // 10. FINALIZAR O DIA
 btnFinalizar.addEventListener('click', async () => {
