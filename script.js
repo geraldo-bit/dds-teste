@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { 
     getFirestore, collection, doc, setDoc, onSnapshot, addDoc, 
-    serverTimestamp, query, orderBy, getDocs, deleteDoc 
+    serverTimestamp, query, orderBy, getDocs, deleteDoc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // 2. CONFIGURAÇÃO DO FIREBASE
@@ -88,22 +88,39 @@ let desenhando = false;
 const dataHoje = new Date().toLocaleDateString('pt-BR');
 dataAtualText.innerText = dataHoje;
 
-// 6. LÓGICA DE LOGIN
-formLogin.addEventListener('submit', (e) => {
+// 6. LÓGICA DE LOGIN (Agora segura!)
+formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const senha = document.getElementById('senha-login').value;
+    const senhaDigitada = document.getElementById('senha-login').value;
+    const btnEntrar = document.getElementById('btn-entrar');
+    const textoOriginal = btnEntrar.innerText;
 
-    if (senha === "senai123") {
-        telaLogin.style.display = 'none';
-        telaDSS.style.display = 'block';
-        painelProfessor.style.display = 'flex'; 
-        btnFinalizar.style.display = 'inline-block'; 
-        btnGerarPdf.style.display = 'inline-block'; 
+    btnEntrar.innerText = "Verificando...";
+    btnEntrar.disabled = true;
+
+    try {
+        const docSnap = await getDoc(doc(db, "configuracoes", "acesso"));
         
-        usuarioLogadoTexto.innerText = "Professor"; 
-        msgErro.style.display = 'none';
-        document.getElementById('senha-login').value = ''; 
-    } else { msgErro.style.display = 'block'; }
+        if (docSnap.exists() && senhaDigitada === docSnap.data().senha) {
+            telaLogin.style.display = 'none';
+            telaDSS.style.display = 'block';
+            painelProfessor.style.display = 'flex'; 
+            btnFinalizar.style.display = 'inline-block'; 
+            btnGerarPdf.style.display = 'inline-block'; 
+            
+            usuarioLogadoTexto.innerText = "Professor"; 
+            msgErro.style.display = 'none';
+            document.getElementById('senha-login').value = ''; 
+        } else {
+            msgErro.style.display = 'block';
+        }
+    } catch (error) {
+        console.error("Erro ao verificar senha:", error);
+        alert("Erro de conexão com o servidor. Verifique sua internet.");
+    } finally {
+        btnEntrar.innerText = textoOriginal;
+        btnEntrar.disabled = false;
+    }
 });
 
 btnEntrarAluno.addEventListener('click', () => {
@@ -207,7 +224,6 @@ matriculaInput.addEventListener('input', (e) => {
     }
 });
 
-// Abre o Modal ao clicar no botão "Assinar"
 btnAssinar.addEventListener('click', () => {
     if (!colaboradorAtual) return;
     if (!listaLiberada) { alert("A lista está fechada!"); return; }
@@ -219,7 +235,6 @@ btnAssinar.addEventListener('click', () => {
     limparCanvas();
 });
 
-// Configurações do Pincel
 ctx.lineWidth = 3;
 ctx.lineCap = 'round';
 ctx.strokeStyle = '#000000';
@@ -231,7 +246,6 @@ function getPosicao(e) {
     return { x: x, y: y };
 }
 
-// Eventos de Desenho no Canvas
 canvas.addEventListener('mousedown', (e) => { desenhando = true; ctx.beginPath(); ctx.moveTo(getPosicao(e).x, getPosicao(e).y); });
 canvas.addEventListener('mousemove', (e) => { if (desenhando) { ctx.lineTo(getPosicao(e).x, getPosicao(e).y); ctx.stroke(); }});
 canvas.addEventListener('mouseup', () => desenhando = false);
@@ -246,15 +260,12 @@ function limparCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 btnFecharModal.addEventListener('click', () => modalAssinatura.style.display = 'none');
 btnLimparModal.addEventListener('click', limparCanvas);
 
-// Salva o desenho e envia para o Firebase
 btnSalvarModal.addEventListener('click', async () => {
-    // Converte o canvas para imagem base64
     const assinaturaBase64 = canvas.toDataURL('image/png');
     colaboradorAtual.assinatura = assinaturaBase64;
     
-    modalAssinatura.style.display = 'none'; // Fecha o modal
+    modalAssinatura.style.display = 'none'; 
     
-    // Registra no banco
     await addDoc(collection(db, "presencas"), {
         matricula: colaboradorAtual.matricula,
         nome: colaboradorAtual.nome,
@@ -280,7 +291,7 @@ function limparFormulario() {
     if (!matriculaInput.disabled) matriculaInput.focus(); 
 }
 
-// 9. LÓGICA DE GERAÇÃO DO PDF (Modelo SENAI 40 linhas)
+// 9. LÓGICA DE GERAÇÃO DO PDF 
 btnGerarPdf.addEventListener('click', () => {
     document.getElementById('pdf-curso').innerText = ""; 
     document.getElementById('pdf-data').innerText = dataHoje;
@@ -303,12 +314,13 @@ btnGerarPdf.addEventListener('click', () => {
             const nomePessoa = trsPresentes[i].querySelectorAll('td')[1].innerText;
             const assinaturaImg = trsPresentes[i].querySelectorAll('td')[2].innerHTML;
             
+            // Ajustado para max-height 26px e margem negativa para aumentar a assinatura
             tr.innerHTML = `
                 <td>${numeroLinha}</td>
                 <td>${matricula}</td>
                 <td>${nomePessoa}</td>
                 <td style="text-align: center; padding: 1px;">
-                    ${assinaturaImg.replace('<img', '<img style="max-height: 16px;"')}
+                    ${assinaturaImg.replace('<img', '<img style="max-height: 26px; margin: -4px 0;"')}
                 </td>
             `;
         } else {
@@ -370,4 +382,17 @@ btnFinalizar.addEventListener('click', async () => {
     
     limparFormulario();
     alert(`DSS Finalizado com sucesso!\nO próximo apresentador já foi escalado para amanhã.`);
+});
+
+// 11. BLOQUEIO DE INSPECIONAR ELEMENTO (Segurança Front-end)
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); 
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12' || 
+       (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) || 
+       (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+    }
 });
