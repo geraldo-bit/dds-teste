@@ -49,6 +49,15 @@ header { display: flex; flex-direction: column; align-items: center; margin-bott
 #btn-assinar { background-color: #005594; color: #fff; border: none; padding: 12px 24px; border-radius: 5px; font-weight: bold; cursor: pointer; height: 42px; }
 #btn-assinar:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.6; }
 
+/* MODAL DE ASSINATURA */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+.modal-content { background: white; padding: 25px; border-radius: 10px; text-align: center; max-width: 95%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+#canvas-assinatura { border: 2px dashed #005594; border-radius: 8px; touch-action: none; background: #f8f9fa; cursor: crosshair; margin-bottom: 15px; }
+.modal-botoes { display: flex; justify-content: space-between; gap: 10px; }
+.btn-cancelar { padding: 10px 15px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+.btn-limpar { padding: 10px 15px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+.btn-salvar { padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; flex: 1; }
+
 /* TABELA DA TELA */
 .tabela-container { overflow-x: auto; margin-bottom: 20px; max-height: 400px; }
 table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -59,22 +68,23 @@ td img { max-height: 40px; display: block; }
 .acoes-finais { text-align: right; margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 15px; }
 #btn-finalizar { background-color: #17a2b8; color: #fff; border: none; padding: 12px 24px; border-radius: 5px; font-weight: bold; cursor: pointer; }
 
-
-/* --- ESTILOS DO TEMPLATE DE PDF (A MÁGICA ESCONDIDA) --- */
+/* --- ESTILOS DO TEMPLATE DE PDF (SENAI - 40 LINHAS) --- */
 #container-pdf {
-    position: absolute; /* Tira do fluxo da página */
-    left: -9999px;      /* Joga pra bem longe da tela para ninguém ver */
+    position: absolute; 
+    left: -9999px;      
     top: 0;
-    width: 210mm;       /* Largura exata de uma folha A4 em pé */
+    width: 210mm;       
     background: white;
-    padding: 10mm;
+    padding: 8mm 10mm; 
     color: black;
     font-family: Arial, sans-serif;
-    font-size: 12px;
+    font-size: 11px; 
 }
 .tabela-pdf { width: 100%; border-collapse: collapse; margin-bottom: 0; }
-.tabela-pdf th, .tabela-pdf td { border: 1px solid black; padding: 6px; text-transform: uppercase; }
-.tabela-body { margin-top: -1px; } /* Cola uma tabela na outra */
-.tabela-body th { background-color: #d9d9d9; font-weight: bold; text-align: center; }
-.tabela-body td { height: 26px; vertical-align: middle; }
-.tabela-body td:nth-child(1) { text-align: center; font-weight: bold; }
+.tabela-pdf th, .tabela-pdf td { border: 1px solid black; padding: 3px 5px; text-transform: uppercase; }
+.infos-senai { margin-top: -1px; }
+.tabela-body { margin-top: -1px; }
+.rodape-senai { margin-top: -1px; }
+.tabela-body th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
+.tabela-body td { height: 18.5px; vertical-align: middle; }
+.tabela-body td:nth-child(1) { text-align: center; }
