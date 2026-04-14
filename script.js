@@ -5,7 +5,7 @@ import {
     serverTimestamp, query, orderBy, getDocs, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// 2. CONFIGURAÇÃO DO FIREBASE (Cole a sua chave aqui)
+// 2. CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyD78g8BkCFCMwFxYkYmh6V0zfXmLvHQkEY",
     authDomain: "dss-digital-senai.firebaseapp.com",
@@ -19,26 +19,26 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 3. BASE DE DADOS LOCAL (18 Nomes)
+// 3. BASE DE DADOS LOCAL (18 Nomes - Sem assinatura fixa)
 const bancoDeDados = {
-    "0001143260": { nome: "GERALDO PEREIRA XAVIER", assinatura: "assina" },
-    "0001194553": { nome: "ANA BEATRIZ ROCHA BARBOSA", assinatura: "assina" },
-    "0001194470": { nome: "ANTONIO SERGIO MIGUEL CUNHA", assinatura: "assina"},
-    "0001194638": { nome: "ARIEL DUARTE CAJADO", assinatura: "assina"},
-    "0001194585": { nome: "DIEGO PEREIRA SALES", assinatura: "assina"},
-    "0001071300": { nome: "DJONATHA MESSIAS RIBEIRO SANTOS", assinatura: "assina"},
-    "0001194231": { nome: "FELIPE ALEXANDRE DA ROCHA SILVA", assinatura: "assina"},
-    "0001194285": { nome: "ERICK HENRIQUE BARBOSA", assinatura: "assina"},
-    "0001194278": { nome: "JOAO VICTOR SARAIVA RESENDE", assinatura: "assina"},
-    "0001103840": { nome: "JOHNY ROBERTO OLIVEIRA JUNIOR", assinatura: "assina"},
-    "0001194502": { nome: "KAUANNY CRISTINY SANTOS FERREIRA", assinatura: "assina"},
-    "0001145074": { nome: "LUIS GUSTAVO DE SOUZA MELO", assinatura: "assina"},
-    "0001194133": { nome: "MARIA GABRIELA DOS SANTOS", assinatura: "assina"},
-    "0001135194": { nome: "MARIANA ZUCCO GONTIJO", assinatura: "assina"},
-    "0001104669": { nome: "NICOLAS KEVIN FERREIRA DA SILVA", assinatura: "assina"},
-    "0001194531": { nome: "NICOLLE HERMANO GONCALVES DA SILVA", assinatura: "assina"},
-    "0000921621": { nome: "PABLO YURI PIRES DE SOUZA", assinatura: "assina"},
-    "0001023129": { nome: "RONAN JOSE FERREIRA COSTA", assinatura: "assina"}
+    "0001143260": { nome: "GERALDO PEREIRA XAVIER" },
+    "0001194553": { nome: "ANA BEATRIZ ROCHA BARBOSA" },
+    "0001194470": { nome: "ANTONIO SERGIO MIGUEL CUNHA" },
+    "0001194638": { nome: "ARIEL DUARTE CAJADO" },
+    "0001194585": { nome: "DIEGO PEREIRA SALES" },
+    "0001071300": { nome: "DJONATHA MESSIAS RIBEIRO SANTOS" },
+    "0001194231": { nome: "FELIPE ALEXANDRE DA ROCHA SILVA" },
+    "0001194285": { nome: "ERICK HENRIQUE BARBOSA" },
+    "0001194278": { nome: "JOAO VICTOR SARAIVA RESENDE" },
+    "0001103840": { nome: "JOHNY ROBERTO OLIVEIRA JUNIOR" },
+    "0001194502": { nome: "KAUANNY CRISTINY SANTOS FERREIRA" },
+    "0001145074": { nome: "LUIS GUSTAVO DE SOUZA MELO" },
+    "0001194133": { nome: "MARIA GABRIELA DOS SANTOS" },
+    "0001135194": { nome: "MARIANA ZUCCO GONTIJO" },
+    "0001104669": { nome: "NICOLAS KEVIN FERREIRA DA SILVA" },
+    "0001194531": { nome: "NICOLLE HERMANO GONCALVES DA SILVA" },
+    "0000921621": { nome: "PABLO YURI PIRES DE SOUZA" },
+    "0001023129": { nome: "RONAN JOSE FERREIRA COSTA" }
 };
 
 // 4. MAPEAMENTO DA TELA
@@ -49,7 +49,6 @@ const msgErro = document.getElementById('msg-erro');
 const btnSair = document.getElementById('btn-sair');
 const usuarioLogadoTexto = document.getElementById('usuario-logado');
 
-// Elementos novos do Tema e PDF
 const dataAtualText = document.getElementById('data-atual');
 const temaDisplay = document.getElementById('tema-display');
 const inputTema = document.getElementById('input-tema');
@@ -59,7 +58,6 @@ const btnGerarPdf = document.getElementById('btn-gerar-pdf');
 const btnEntrarAluno = document.getElementById('btn-entrar-aluno');
 const painelProfessor = document.getElementById('painel-professor');
 const btnFinalizar = document.getElementById('btn-finalizar');
-
 const btnTrava = document.getElementById('btn-trava');
 const btnPular = document.getElementById('btn-pular'); 
 const badgeStatus = document.getElementById('badge-status');
@@ -70,12 +68,21 @@ const nomeInput = document.getElementById('nome');
 const btnAssinar = document.getElementById('btn-assinar');
 const tabelaBody = document.querySelector('#tabela-presenca tbody');
 
+// MODAL E CANVAS
+const modalAssinatura = document.getElementById('modal-assinatura');
+const canvas = document.getElementById('canvas-assinatura');
+const ctx = canvas.getContext('2d');
+const btnFecharModal = document.getElementById('btn-fechar-modal');
+const btnLimparModal = document.getElementById('btn-limpar-modal');
+const btnSalvarModal = document.getElementById('btn-salvar-modal');
+
 // Variáveis de Controle
 let colaboradorAtual = null;
 let listaLiberada = false; 
 let presentes = new Set(); 
 let filaResponsaveis = []; 
 let pulosAtuais = 0; 
+let desenhando = false;
 
 // 5. INICIALIZAÇÃO DA DATA
 const dataHoje = new Date().toLocaleDateString('pt-BR');
@@ -91,14 +98,12 @@ formLogin.addEventListener('submit', (e) => {
         telaDSS.style.display = 'block';
         painelProfessor.style.display = 'flex'; 
         btnFinalizar.style.display = 'inline-block'; 
-        btnGerarPdf.style.display = 'inline-block'; // Mostra botão do PDF
+        btnGerarPdf.style.display = 'inline-block'; 
         
         usuarioLogadoTexto.innerText = "Professor"; 
         msgErro.style.display = 'none';
         document.getElementById('senha-login').value = ''; 
-    } else {
-        msgErro.style.display = 'block';
-    }
+    } else { msgErro.style.display = 'block'; }
 });
 
 btnEntrarAluno.addEventListener('click', () => {
@@ -106,7 +111,7 @@ btnEntrarAluno.addEventListener('click', () => {
     telaDSS.style.display = 'block';
     painelProfessor.style.display = 'none'; 
     btnFinalizar.style.display = 'none'; 
-    btnGerarPdf.style.display = 'none'; // Esconde botão do PDF do aluno
+    btnGerarPdf.style.display = 'none'; 
     usuarioLogadoTexto.innerText = "Acesso de Colaborador/Aluno";
 });
 
@@ -117,15 +122,11 @@ btnSair.addEventListener('click', () => {
 });
 
 // 7. FIREBASE EM TEMPO REAL
-
-// A - Escuta o Status (Trava e Tema)
 onSnapshot(doc(db, "configuracoes", "statusDSS"), (documento) => {
     if (documento.exists()) {
         listaLiberada = documento.data().aberta;
         temaDisplay.innerText = documento.data().tema || "Aguardando definição...";
-    } else {
-        listaLiberada = false; 
-    }
+    } else { listaLiberada = false; }
 
     if (listaLiberada) {
         badgeStatus.innerHTML = "Aberta para Assinaturas";
@@ -140,27 +141,22 @@ onSnapshot(doc(db, "configuracoes", "statusDSS"), (documento) => {
         btnTrava.innerText = "Liberar Lista";
         btnTrava.classList.remove('modo-bloquear');
         matriculaInput.disabled = true;
-        matriculaInput.placeholder = "Aguardando liberação do professor...";
+        matriculaInput.placeholder = "Aguardando liberação...";
         limparFormulario();
     }
 });
 
-// Ação de Salvar Tema
 btnSalvarTema.addEventListener('click', async () => {
     const temaTexto = inputTema.value.trim();
     if (!temaTexto) { alert("Digite um tema antes de salvar."); return; }
-    
-    // O merge:true altera o tema sem apagar a situação da trava
     await setDoc(doc(db, "configuracoes", "statusDSS"), { tema: temaTexto }, { merge: true });
-    alert("Tema definido para todos!");
-    inputTema.value = "";
+    alert("Tema definido para todos!"); inputTema.value = "";
 });
 
 btnTrava.addEventListener('click', async () => {
     await setDoc(doc(db, "configuracoes", "statusDSS"), { aberta: !listaLiberada }, { merge: true });
 });
 
-// B - Escuta a Fila do DSS
 onSnapshot(doc(db, "configuracoes", "filaDSS"), (documento) => {
     if (documento.exists()) {
         filaResponsaveis = documento.data().fila || [];
@@ -175,19 +171,13 @@ onSnapshot(doc(db, "configuracoes", "filaDSS"), (documento) => {
             const matriculaDoDia = visualFila[0];
             const info = bancoDeDados[matriculaDoDia];
             nomeResponsavelText.innerText = info ? info.nome : "Desconhecido";
-        } else {
-            nomeResponsavelText.innerText = "Nenhum responsável na fila";
-        }
+        } else { nomeResponsavelText.innerText = "Nenhum responsável"; }
     } else {
-        // Primeira vez rodando: organiza do A ao Z
-        const filaInicial = Object.keys(bancoDeDados).sort((a, b) => {
-            return bancoDeDados[a].nome.localeCompare(bancoDeDados[b].nome);
-        }); 
+        const filaInicial = Object.keys(bancoDeDados).sort((a, b) => bancoDeDados[a].nome.localeCompare(bancoDeDados[b].nome)); 
         setDoc(doc(db, "configuracoes", "filaDSS"), { fila: filaInicial, pulos: 0 });
     }
 });
 
-// Ação de Pular
 btnPular.addEventListener('click', async () => {
     if (filaResponsaveis.length === 0) return;
     let novoPulo = pulosAtuais + 1;
@@ -195,11 +185,8 @@ btnPular.addEventListener('click', async () => {
     await setDoc(doc(db, "configuracoes", "filaDSS"), { fila: filaResponsaveis, pulos: novoPulo });
 });
 
-// Escuta Assinaturas
-const consultaPresencas = query(collection(db, "presencas"), orderBy("nome", "asc"));
-onSnapshot(consultaPresencas, (snapshot) => {
-    tabelaBody.innerHTML = ''; 
-    presentes.clear(); 
+onSnapshot(query(collection(db, "presencas"), orderBy("nome", "asc")), (snapshot) => {
+    tabelaBody.innerHTML = ''; presentes.clear(); 
     snapshot.forEach((docSnap) => {
         const dados = docSnap.data();
         presentes.add(dados.matricula); 
@@ -207,7 +194,7 @@ onSnapshot(consultaPresencas, (snapshot) => {
     });
 });
 
-// 8. LÓGICA DE ASSINATURA NA TELA
+// 8. LÓGICA DE ASSINATURA COM CANVAS
 matriculaInput.addEventListener('input', (e) => {
     const mat = e.target.value.trim(); 
     if (bancoDeDados[mat]) {
@@ -216,25 +203,58 @@ matriculaInput.addEventListener('input', (e) => {
         nomeInput.value = colaboradorAtual.nome; 
         btnAssinar.disabled = false;             
     } else {
-        colaboradorAtual = null;
-        nomeInput.value = "";
-        btnAssinar.disabled = true;
+        colaboradorAtual = null; nomeInput.value = ""; btnAssinar.disabled = true;
     }
 });
 
-matriculaInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !btnAssinar.disabled) { registrarPresenca(); }
-});
-
-btnAssinar.addEventListener('click', registrarPresenca);
-
-async function registrarPresenca() {
+// Abre o Modal ao clicar no botão "Assinar"
+btnAssinar.addEventListener('click', () => {
     if (!colaboradorAtual) return;
     if (!listaLiberada) { alert("A lista está fechada!"); return; }
     if (presentes.has(colaboradorAtual.matricula)) {
         alert(`${colaboradorAtual.nome} já assinou hoje!`);
         limparFormulario(); return;
     }
+    modalAssinatura.style.display = 'flex';
+    limparCanvas();
+});
+
+// Configurações do Pincel
+ctx.lineWidth = 3;
+ctx.lineCap = 'round';
+ctx.strokeStyle = '#000000';
+
+function getPosicao(e) {
+    let rect = canvas.getBoundingClientRect();
+    let x = (e.clientX || e.touches[0].clientX) - rect.left;
+    let y = (e.clientY || e.touches[0].clientY) - rect.top;
+    return { x: x, y: y };
+}
+
+// Eventos de Desenho no Canvas
+canvas.addEventListener('mousedown', (e) => { desenhando = true; ctx.beginPath(); ctx.moveTo(getPosicao(e).x, getPosicao(e).y); });
+canvas.addEventListener('mousemove', (e) => { if (desenhando) { ctx.lineTo(getPosicao(e).x, getPosicao(e).y); ctx.stroke(); }});
+canvas.addEventListener('mouseup', () => desenhando = false);
+canvas.addEventListener('mouseout', () => desenhando = false);
+
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); desenhando = true; ctx.beginPath(); ctx.moveTo(getPosicao(e).x, getPosicao(e).y); }, {passive: false});
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (desenhando) { ctx.lineTo(getPosicao(e).x, getPosicao(e).y); ctx.stroke(); }}, {passive: false});
+canvas.addEventListener('touchend', () => desenhando = false);
+
+function limparCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+btnFecharModal.addEventListener('click', () => modalAssinatura.style.display = 'none');
+btnLimparModal.addEventListener('click', limparCanvas);
+
+// Salva o desenho e envia para o Firebase
+btnSalvarModal.addEventListener('click', async () => {
+    // Converte o canvas para imagem base64
+    const assinaturaBase64 = canvas.toDataURL('image/png');
+    colaboradorAtual.assinatura = assinaturaBase64;
+    
+    modalAssinatura.style.display = 'none'; // Fecha o modal
+    
+    // Registra no banco
     await addDoc(collection(db, "presencas"), {
         matricula: colaboradorAtual.matricula,
         nome: colaboradorAtual.nome,
@@ -242,7 +262,7 @@ async function registrarPresenca() {
         timestamp: serverTimestamp() 
     });
     limparFormulario();
-}
+});
 
 function adicionarNaTabela(colaborador) {
     const tr = document.createElement('tr');
@@ -260,24 +280,23 @@ function limparFormulario() {
     if (!matriculaInput.disabled) matriculaInput.focus(); 
 }
 
-// // 9. LÓGICA DE GERAÇÃO DO PDF (Agora com pausa para a câmera focar!)
+// 9. LÓGICA DE GERAÇÃO DO PDF (Modelo SENAI 40 linhas)
 btnGerarPdf.addEventListener('click', () => {
-    // 1. Prepara o horário
-    const horarioAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
-    // 2. Preenche o cabeçalho do template escondido
+    document.getElementById('pdf-curso').innerText = ""; 
     document.getElementById('pdf-data').innerText = dataHoje;
-    document.getElementById('pdf-horario').innerText = horarioAtual;
+    document.getElementById('pdf-instrutor').innerText = ""; 
+    document.getElementById('pdf-codigo').innerText = ""; 
     document.getElementById('pdf-tema').innerText = temaDisplay.innerText;
-    document.getElementById('pdf-instrutor').innerText = nomeResponsavelText.innerText;
+    document.getElementById('rodape-instrutor').innerText = "Assinatura do Professor"; 
+    document.getElementById('rodape-palestrante').innerText = nomeResponsavelText.innerText; 
 
-    // 3. Preenche as 30 linhas da tabela do PDF
     const tbodyPDF = document.getElementById('pdf-tbody');
     tbodyPDF.innerHTML = ''; 
     const trsPresentes = document.querySelectorAll('#tabela-presenca tbody tr');
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 40; i++) {
         const tr = document.createElement('tr');
+        const numeroLinha = (i + 1).toString().padStart(2, '0');
         
         if (i < trsPresentes.length) {
             const matricula = trsPresentes[i].querySelectorAll('td')[0].innerText;
@@ -285,26 +304,25 @@ btnGerarPdf.addEventListener('click', () => {
             const assinaturaImg = trsPresentes[i].querySelectorAll('td')[2].innerHTML;
             
             tr.innerHTML = `
-                <td>${i + 1}</td>
+                <td>${numeroLinha}</td>
                 <td>${matricula}</td>
                 <td>${nomePessoa}</td>
-                <td style="text-align: center; padding: 2px;">
-                    ${assinaturaImg.replace('<img', '<img style="max-height: 22px;"')}
+                <td style="text-align: center; padding: 1px;">
+                    ${assinaturaImg.replace('<img', '<img style="max-height: 16px;"')}
                 </td>
             `;
         } else {
-            tr.innerHTML = `<td>${i + 1}</td><td></td><td></td><td></td>`;
+            tr.innerHTML = `<td>${numeroLinha}</td><td></td><td></td><td></td>`;
         }
         tbodyPDF.appendChild(tr);
     }
 
-    // --- A MÁGICA COM O TIME-OUT ---
     const elementoPDF = document.getElementById('container-pdf');
     const telaPrincipal = document.getElementById('tela-dss');
 
     const opt = {
         margin:       0,
-        filename:     `DDS_${dataHoje.replace(/\//g, '-')}.pdf`,
+        filename:     `DDS_SENAI_${dataHoje.replace(/\//g, '-')}.pdf`,
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 2, useCORS: true }, 
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -314,25 +332,21 @@ btnGerarPdf.addEventListener('click', () => {
     btnGerarPdf.innerText = "⏳ Gerando...";
     btnGerarPdf.disabled = true;
 
-    // 1. Coloca a tabela do PDF na tela e esconde o painel do sistema
     elementoPDF.style.position = 'relative';
     elementoPDF.style.left = '0';
     telaPrincipal.style.display = 'none';
 
-    // 2. Dá uma pausa de 100 milissegundos ANTES de tirar a foto
     setTimeout(() => {
         html2pdf().set(opt).from(elementoPDF).save().then(() => {
-            
-            // 3. A foto foi tirada! Pode devolver tudo ao normal
             elementoPDF.style.position = 'absolute';
             elementoPDF.style.left = '-9999px';
             telaPrincipal.style.display = 'block';
-
             btnGerarPdf.innerText = textoOriginal;
             btnGerarPdf.disabled = false;
         });
-    }, 100); // <-- Aqui estão os nossos 100 milissegundos salvadores!
+    }, 150); 
 });
+
 // 10. FINALIZAR O DIA
 btnFinalizar.addEventListener('click', async () => {
     if (presentes.size === 0) { alert("A lista está vazia."); return; }
@@ -348,10 +362,8 @@ btnFinalizar.addEventListener('click', async () => {
         await setDoc(doc(db, "configuracoes", "filaDSS"), { fila: visualFila, pulos: 0 });
     }
 
-    // Bloqueia e limpa o tema para amanhã
     await setDoc(doc(db, "configuracoes", "statusDSS"), { aberta: false, tema: "Aguardando definição..." });
     
-    // Limpa assinaturas do banco
     const snapshotPresencas = await getDocs(collection(db, "presencas"));
     const promessasDeletar = snapshotPresencas.docs.map((d) => deleteDoc(doc(db, "presencas", d.id)));
     await Promise.all(promessasDeletar);
